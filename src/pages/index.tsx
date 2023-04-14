@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useState } from "react";
 import { Header } from "~/components/Header";
+import { NoteEditor } from "~/components/NoteEditor";
 import { api, type RouterOutputs } from "~/utils/api";
 
 const Home: NextPage = () => {
@@ -53,6 +54,12 @@ const Content: React.FC = () => {
   );
 
   const createTopic = api.topic.create.useMutation({
+    onSuccess: () => {
+      void refetchTopics();
+    }
+  });
+
+  const createNote = api.note.create.useMutation({
     onSuccess: () => {
       void refetchTopics();
     }
@@ -115,6 +122,15 @@ const Content: React.FC = () => {
             });
           }}
         /> */}
+        <NoteEditor
+          onSave={({ title, content }) => {
+            void createNote.mutate({
+              title,
+              content,
+              topicId: selectedTopic?.id ?? "",
+            });
+          }}
+        />
       </div>
     </div>
   )
