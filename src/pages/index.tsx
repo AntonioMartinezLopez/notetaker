@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useState } from "react";
 import { Header } from "~/components/Header";
+import { NoteCard } from "~/components/NoteCard";
 import { NoteEditor } from "~/components/NoteEditor";
 import { api, type RouterOutputs } from "~/utils/api";
 
@@ -42,7 +43,7 @@ const Content: React.FC = () => {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
 
 
-  // DATA FETCHING
+  // DATA FETCHING - TOPICS
   const { data: topics, refetch: refetchTopics } = api.topic.getAll.useQuery(
     undefined,
     {
@@ -59,11 +60,26 @@ const Content: React.FC = () => {
     }
   });
 
+
+  // DATA FETCHING - NOTES
+  const { data: notes, refetch: refetchNotes } = api.note.getAll.useQuery(
+    { topicId: selectedTopic?.id ?? "" },
+    {
+      enabled: sessionData?.user !== undefined && selectedTopic != null,
+    }
+  );
+
   const createNote = api.note.create.useMutation({
     onSuccess: () => {
-      void refetchTopics();
+      void refetchNotes();
     }
   });
+
+  const deleteNote = api.note.delete.useMutation({
+    onSuccess: () => {
+      void refetchNotes();
+    }
+  })
 
 
 
@@ -102,26 +118,17 @@ const Content: React.FC = () => {
         />
       </div>
       <div className="col-span-3">
-        {/* <div>
+        <div>
           {notes?.map((note) => (
             <div key={note.id} className="mt-5">
               <NoteCard
                 note={note}
-                onDelete={() => void deleteNote.mutate({ id: note.id })}
+                onDelete={() => void deleteNote.mutate({ noteId: note.id })}
               />
             </div>
           ))}
         </div>
 
-        <NoteEditor
-          onSave={({ title, content }) => {
-            void createNote.mutate({
-              title,
-              content,
-              topicId: selectedTopic?.id ?? "",
-            });
-          }}
-        /> */}
         <NoteEditor
           onSave={({ title, content }) => {
             void createNote.mutate({
