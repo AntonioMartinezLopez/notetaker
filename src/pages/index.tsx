@@ -32,6 +32,7 @@ const Home: NextPage = () => {
 export default Home;
 
 type Topic = RouterOutputs["topic"]["getAll"][0];
+import { AnimatePresence, motion } from "framer-motion";
 
 const Content: React.FC = () => {
 
@@ -81,15 +82,49 @@ const Content: React.FC = () => {
     }
   })
 
+  const list = {
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.07,
+        delayChildren: 0.1
+      },
+    },
+    hidden: {
+      opacity: 0,
+      transition: {
+        staggerChildren: 0.05,
+        staggerDirection: -1
+      },
+    },
+  }
+
+  const item = {
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        y: { stiffness: 1000, velocity: -100 }
+      }
+    },
+    hidden: {
+      y: 50,
+      opacity: 0,
+      transition: {
+        y: { stiffness: 1000 }
+      }
+    },
+  }
+
 
 
 
   return (
     <div className="mx-5 mt-5 grid grid-cols-4 gap-2">
-      <div className="px-2">
-        <ul className="menu rounded-box w-56 bg-base-100 p-2">
-          {topics?.map((topic) => (
-            <li key={topic.id}>
+      <motion.div className="px-2" initial="hidden" animate={topics && topics?.length > 0 && "visible"} variants={list} >
+        <motion.ul className="menu rounded-box w-56 bg-base-100 p-2">
+          {topics?.map((topic: Topic) => (
+            <motion.li key={topic.id} whileHover={{ scale: 1.1 }} variants={item}>
               <a
                 href="#"
                 onClick={(evt) => {
@@ -99,9 +134,9 @@ const Content: React.FC = () => {
               >
                 {topic.title}
               </a>
-            </li>
+            </motion.li>
           ))}
-        </ul>
+        </motion.ul>
         <div className="divider"></div>
         <input
           type="text"
@@ -116,18 +151,22 @@ const Content: React.FC = () => {
             }
           }}
         />
-      </div>
-      <div className="col-span-3">
-        <div>
-          {notes?.map((note) => (
-            <div key={note.id} className="mt-5">
-              <NoteCard
-                note={note}
-                onDelete={() => void deleteNote.mutate({ noteId: note.id })}
-              />
-            </div>
-          ))}
-        </div>
+      </motion.div>
+      <motion.div className="col-span-3">
+        <motion.div initial="hidden" animate={"visible"} variants={item}>
+          <AnimatePresence>
+            {notes?.map((note) => (
+              <motion.div key={`note-${note.id}`} className="mt-5" initial={{ x: 300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }} exit={{ opacity: 0, x: 300 }} >
+                <NoteCard
+                  note={note}
+                  onDelete={() => void deleteNote.mutate({ noteId: note.id })}
+                />
+              </motion.div>
+
+            ))}
+          </AnimatePresence>
+        </motion.div>
 
         <NoteEditor
           onSave={({ title, content }) => {
@@ -138,7 +177,7 @@ const Content: React.FC = () => {
             });
           }}
         />
-      </div>
+      </motion.div>
     </div>
   )
 }
